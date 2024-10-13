@@ -11,7 +11,7 @@
     <groupId>com.example</groupId>
     <artifactId>ecosysweb</artifactId>
     <packaging>jar</packaging>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
     <name>ecosysweb</name>
     <description>ecosysweb</description>
     <url/>

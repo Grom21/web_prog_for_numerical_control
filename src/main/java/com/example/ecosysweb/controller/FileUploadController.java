@@ -11,40 +11,42 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class FileUploadController {
 
-    @RequestMapping(value="/upload", method=RequestMethod.GET)
-    public @ResponseBody String provideUploadInfo() {
-        return "Вы можете загружать файл с использованием того же URL.";
+    @RequestMapping(value="/upload", method=RequestMethod.POST)
+    public @ResponseBody String handleFileUpload(@RequestParam("name") String name) {
+
+        StringBuilder result = new StringBuilder();
+        File folder = new File(name);
+        if (!folder.exists() || folder.isFile()) {
+            return "Ошибка: указан неверный путь к папке!";
+        }
+        File[] files = folder.listFiles();
+        for (File file : files) {
+            if (file.isFile() && file.toString().endsWith(".csv")) {
+                result.append('\n').append(writeFile(file));
+            }
+        }
+        return result.toString();
     }
 
-    @RequestMapping(value="/upload", method=RequestMethod.POST)
-    public @ResponseBody String handleFileUpload(@RequestParam("name") String name){
+    public String writeFile(File file) {
 
         String namefolder;
-        String folderpath;
-        String createfolderpath;
-        String solidus;
-
-        if(name.contains("/")) {
-            namefolder = name.substring(name.lastIndexOf('/') + 1, name.lastIndexOf('/') + 5) + "_KR";
-            folderpath = name.substring(0, name.lastIndexOf('/') + 1) + namefolder;
-            createfolderpath = name.substring(0, name.lastIndexOf('/'));
-            solidus = "/";
-        } else {
-            namefolder = name.substring(name.lastIndexOf("\\") + 1, name.lastIndexOf("\\") + 5) + "_KR";
-            folderpath = name.substring(0, name.lastIndexOf("\\") + 1) + namefolder;
-            createfolderpath = name.substring(0, name.lastIndexOf("\\"));
-            solidus = "\\";
+        if (file.getName().contains("_")) {
+            namefolder = file.getName().substring(0, file.getName().indexOf('_')) + "_KR";
         }
+        else {
+            namefolder = file.getName().substring(0, file.getName().indexOf('.')) + "_KR";
+        }
+        String folderpath = file.getParentFile().toString() + File.separator + namefolder;
 
-
-        File directory = new File(createfolderpath, namefolder);
+        File directory = new File(file.getParent(), namefolder);
         if (!directory.exists()) {
             directory.mkdir();
         }
 
         String[] str;
         int i = 0;
-        try (Scanner scanner = new Scanner(new File(name));) {
+        try (Scanner scanner = new Scanner(file);) {
             while (scanner.hasNextLine()) {
                 str = scanner.nextLine().split(";");
                 if (i == 0) {
@@ -53,9 +55,9 @@ public class FileUploadController {
                 }
 
                 try {
-                    File file1 = new File(folderpath + solidus + str[2] + ".xml");
+                    File file1 = new File(folderpath + File.separator + str[2] + ".xml");
                     if (file1.createNewFile()) {
-                        FileWriter fileWriter = new FileWriter(folderpath + solidus + str[2] + ".xml");
+                        FileWriter fileWriter = new FileWriter(folderpath + File.separator + str[2] + ".xml");
                         fileWriter.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>  \n" +
                                 "<Plates >\n" +
                                 " <Plate code=\"" + str[2] + "\" name=\"" + str[2] + "\" length=\"" + str[8] + "\" width=\"" + str[9] + "\" thickness=\"" + str[12] + "\" feedNo=\"1\" >\n" +
@@ -68,7 +70,7 @@ public class FileUploadController {
                         fileWriter.close();
                         i++;
                     } else {
-                        return "Файл уже существует! ошибка на строке " + i + " таблицы!";
+                        return "Файл уже существует! Ошибка на строке " + i + " таблицы файла " + file.getName();
                     }
                 } catch (IOException e) {
                     return "Ошибка при создании файла" + i + " таблицы" + e.toString();
@@ -77,6 +79,6 @@ public class FileUploadController {
         } catch (IOException ex) {
             return "Ошибка при чтении таблицы! " + ex;
         }
-        return "Все файлы сохранены";
+        return "Готово! Создано " + i + " файлов из таблицы " + file.getName();
     }
 }

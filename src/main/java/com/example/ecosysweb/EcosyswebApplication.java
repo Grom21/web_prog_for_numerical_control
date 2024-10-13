@@ -11,5 +11,3 @@ public class EcosyswebApplication {
     }
 
 }
-
-//  C:\Users\Admin\Downloads\0223_КоНс_TEST_KE.csv
